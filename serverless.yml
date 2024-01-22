@@ -1,0 +1,81 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: newrelic-serverless-go-playground
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '3'
+
+plugins:
+  - serverless-offline
+  - serverless-prune-plugin
+  - serverless-go-plugin
+  - serverless-newrelic-lambda-layers
+  - serverless-iam-roles-per-function
+provider:
+  name: aws
+  runtime: provided.al2
+  stage: platform
+  region: us-east-1
+  httpApi:
+    cors: true
+  logRetentionInDays: 14
+
+package:
+  patterns:
+    - '!./**'
+#    - ./bin/**
+
+functions:
+
+  #################################################################################################
+  # Health - service health checks
+  #################################################################################################
+  # https://api.platform.fastenhealth.com/v1/health
+  health:
+    handler: cmd/health/health.go
+    events:
+      - httpApi:
+          path: /health
+          method: get
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - "secretsmanager:GetSecretValue"
+        Resource: "arn:aws:secretsmanager:us-east-1:XXXXX:secret:NEW_RELIC_LICENSE_KEY-WE7fp5"
+custom:
+  prune:
+    automatic: true
+    number: 3
+  go:
+    baseDir: . # folder where go.mod file lives, if set `handler` property should be set relatively to that folder
+    binDir: bin # target folder for binary files
+    cgo: 0 # CGO_ENABLED flag
+    cmd: GOARCH=amd64 GOOS=linux go build -ldflags="-s -w" # compile command
+    monorepo: false # if enabled, builds function every directory (useful for monorepo where go.mod is managed by each function
+    supportedRuntimes: ["provided.al2"] # the plugin compiles a function only if runtime is declared here (either on function or provider level)
+    buildProvidedRuntimeAsBootstrap: true # if enabled, builds and archive function with only single "bootstrap" binary (useful for runtimes like provided.al2)
+  newRelic:
+    accountId: XXXXXXX
+    apiKey: NRAK-XXXXXXXX
+    debug: true
+
+    # Optional
+    enableExtension: true
+    enableFunctionLogs: true
+    enableExtensionLogs: true
+    manualWrapping: true
