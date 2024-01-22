@@ -3,7 +3,7 @@
 clean:
 	rm -rf ./bin ./vendor
 
-deploy: clean domain
+deploy: clean
 	npx serverless deploy --verbose
 
 remove: clean build
